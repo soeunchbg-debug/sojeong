@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>집 매매 비용 계산기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F4F3EF;
+      --white: #FFFFFF;
+      --text: #1A1816;
+      --text-2: #6B6560;
+      --text-3: #A09990;
+      --accent: #D4522A;
+      --accent-bg: #FDF1EC;
+      --border: #E4E2DE;
+      --shadow: 0 2px 12px rgba(0,0,0,0.07);
+      --r: 14px;
+      --r-sm: 8px;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--text);
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      display: flex;
+      align-items: center;
+    }
+    .header-inner { max-width: 1120px; margin: 0 auto; width: 100%; display: flex; align-items: center; gap: 10px; }
+    .header h1 { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.3px; }
+    .header-tag {
+      font-size: 10px; font-weight: 600; background: var(--accent);
+      color: white; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.2px;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      max-width: 1120px; margin: 0 auto;
+      padding: 24px 16px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: start;
+    }
+    .form-col { display: flex; flex-direction: column; gap: 14px; }
+    .result-col { position: sticky; top: 72px; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border-radius: var(--r);
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 11px; font-weight: 700; color: var(--text-2);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title::before {
+      content: ''; display: block; width: 3px; height: 13px;
+      background: var(--accent); border-radius: 2px;
+    }
+
+    /* ── Label ── */
+    label { display: block; font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    label .hint { font-weight: 400; color: var(--text-3); font-size: 12px; margin-left: 4px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
+
+    /* ── Price Input ── */
+    .price-wrap { position: relative; }
+    .price-wrap input {
+      width: 100%; padding: 14px 52px 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--r-sm);
+      font-family: inherit; font-size: 24px; font-weight: 800;
+      color: var(--text); background: var(--bg);
+      outline: none; transition: border-color 0.15s;
+      text-align: right;
+    }
+    .price-wrap input:focus { border-color: var(--accent); background: white; }
+    .price-unit {
+      position: absolute; right: 16px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 15px; font-weight: 600; color: var(--text-2);
+      pointer-events: none;
+    }
+    .price-label {
+      text-align: right; font-size: 13px; color: var(--text-2);
+      margin-top: 5px; min-height: 18px; font-weight: 500;
+    }
+
+    /* ── Segmented ── */
+    .seg { display: grid; gap: 6px; }
+    .seg.c2 { grid-template-columns: repeat(2, 1fr); }
+    .seg.c3 { grid-template-columns: repeat(3, 1fr); }
+    .seg-btn {
+      padding: 9px 4px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      background: var(--bg);
+      font-family: inherit; font-size: 13px; font-weight: 500;
+      color: var(--text-2); cursor: pointer; text-align: center;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .seg-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .seg-btn.on { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* ── Text Input ── */
+    .inp-wrap { position: relative; }
+    .inp-wrap input {
+      width: 100%; padding: 10px 44px 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      font-family: inherit; font-size: 14px; font-weight: 500;
+      color: var(--text); background: var(--bg);
+      outline: none; transition: border-color 0.15s;
+    }
+    .inp-wrap input:focus { border-color: var(--accent); background: white; }
+    .inp-sfx {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px; color: var(--text-2); pointer-events: none;
+    }
+
+    /* ── Slider ── */
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    .slider-row input[type=range] { flex: 1; }
+    .slider-val { min-width: 44px; text-align: right; font-size: 16px; font-weight: 700; color: var(--accent); }
+    input[type=range] {
+      height: 4px; background: var(--border); border-radius: 2px;
+      outline: none; -webkit-appearance: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 20px; height: 20px;
+      border-radius: 50%; background: var(--accent);
+      cursor: pointer; box-shadow: 0 2px 8px rgba(212,82,42,0.4);
+    }
+
+    /* ── Checkbox ── */
+    .chk-group { display: flex; flex-direction: column; gap: 12px; }
+    .chk-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+    .chk-row input[type=checkbox] { width: 18px; height: 18px; margin-top: 1px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+    .chk-txt { flex: 1; }
+    .chk-main { font-size: 13px; font-weight: 500; color: var(--text); display: block; }
+    .chk-sub { font-size: 12px; color: var(--text-3); margin-top: 1px; display: block; }
+    .chk-extra { display: none; margin-top: 8px; margin-left: 28px; }
+    .chk-extra.open { display: block; }
+
+    /* ── Notice ── */
+    .notice {
+      background: #FFFBEF; border: 1px solid #F0D875;
+      border-radius: var(--r-sm); padding: 10px 14px;
+      font-size: 12px; color: #7A5A10; line-height: 1.6;
+    }
+
+    /* ── Result ── */
+    .res-card {
+      background: #1A1816;
+      border-radius: var(--r);
+      overflow: hidden;
+      color: white;
+    }
+    .res-head {
+      padding: 20px;
+      background: linear-gradient(135deg, #D4522A 0%, #B8401C 100%);
+    }
+    .res-head-lbl { font-size: 11px; font-weight: 600; opacity: 0.88; letter-spacing: 0.4px; margin-bottom: 6px; }
+    .res-total-amt { font-size: 30px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.1; }
+    .res-total-amt .u { font-size: 16px; font-weight: 600; margin-left: 2px; }
+    .res-sub { font-size: 12px; opacity: 0.8; margin-top: 5px; }
+
+    .res-body { padding: 16px 20px 20px; }
+    .res-section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+      opacity: 0.45; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .res-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .res-row:last-child { border-bottom: none; }
+    .res-row-lbl { font-size: 13px; opacity: 0.75; }
+    .res-row-lbl .tag {
+      font-size: 10px; background: rgba(255,255,255,0.15);
+      padding: 1px 5px; border-radius: 3px; margin-left: 5px;
+    }
+    .res-row-val { font-size: 13px; font-weight: 600; }
+    .res-row-val.hl { color: #FFA07A; }
+    .res-hr { border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 14px 0; }
+
+    .equity-box {
+      background: rgba(255,255,255,0.08);
+      border-radius: var(--r-sm);
+      padding: 14px 16px; margin-top: 14px;
+    }
+    .equity-lbl { font-size: 11px; opacity: 0.55; margin-bottom: 4px; }
+    .equity-val { font-size: 22px; font-weight: 800; color: #7EE8A2; letter-spacing: -0.3px; }
+    .equity-sub { font-size: 12px; opacity: 0.5; margin-top: 4px; }
+
+    .loan-box {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--r-sm);
+      padding: 12px 16px; margin-top: 8px;
+    }
+    .loan-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+    .loan-row:last-child { margin-bottom: 0; }
+    .loan-row .l { opacity: 0.6; }
+    .loan-row .v { font-weight: 600; color: #93C5FD; }
+
+    /* ── Owner warning ── */
+    .owner-note {
+      font-size: 11px; color: var(--accent);
+      background: var(--accent-bg);
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-top: 8px;
+      display: none;
+    }
+    .owner-note.show { display: block; }
+
+    @media (max-width: 780px) {
+      .layout { grid-template-columns: 1fr; }
+      .result-col { position: static; order: -1; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>🏠 집 매매 비용 계산기</h1>
+    <span class="header-tag">2024 기준</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ── FORM ── -->
+  <div class="form-col">
+
+    <!-- 매물 가격 -->
+    <div class="card">
+      <div class="card-title">매물 가격</div>
+      <div class="price-wrap">
+        <input type="number" id="price" min="0" step="500" value="80000" oninput="calc()">
+        <span class="price-unit">만원</span>
+      </div>
+      <div class="price-label" id="price-display">8억원</div>
+    </div>
+
+    <!-- 주택 정보 -->
+    <div class="card">
+      <div class="card-title">주택 정보</div>
+
+      <div class="form-group">
+        <label>주택 유형</label>
+        <div class="seg c3" id="seg-type">
+          <button class="seg-btn on" data-v="apt">아파트</button>
+          <button class="seg-btn" data-v="villa">빌라/연립</button>
+          <button class="seg-btn" data-v="officetel">오피스텔</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>현재 주택 보유 현황 <span class="hint">취득세율이 달라짐</span></label>
+        <div class="seg c3" id="seg-owner">
+          <button class="seg-btn on" data-v="none">무주택</button>
+          <button class="seg-btn" data-v="one">1주택</button>
+          <button class="seg-btn" data-v="multi">다주택 (2채↑)</button>
+        </div>
+        <div class="owner-note" id="owner-note-one">
+          ⚠️ 1주택자가 추가 취득 시 조정대상지역은 8% 중과 적용. 일시적 2주택(신규 취득일로부터 3년 내 기존 주택 처분) 예외 해당 시 일반세율 적용 가능.
+        </div>
+        <div class="owner-note" id="owner-note-multi">
+          ⚠️ 다주택자(2채↑) 추가 취득 시 12% 중과 적용.
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:0">
+        <label>전용면적 <span class="hint">85㎡ 초과 시 농어촌특별세 부과</span></label>
+        <div class="inp-wrap">
+          <input type="number" id="area" value="84" min="0" oninput="calc()">
+          <span class="inp-sfx">㎡</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 대출 정보 -->
+    <div class="card">
+      <div class="card-title">대출 정보</div>
+
+      <div class="form-group">
+        <label>대출 비중</label>
+        <div class="slider-row">
+          <input type="range" id="loan-ratio" min="0" max="80" step="5" value="40" oninput="onSlider()">
+          <div class="slider-val" id="loan-ratio-disp">40%</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>대출 금리 <span class="hint">연 %</span></label>
+        <div class="inp-wrap">
+          <input type="number" id="loan-rate" value="3.8" step="0.1" min="0" max="20" oninput="calc()">
+          <span class="inp-sfx">%</span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:0">
+        <label>대출 기간</label>
+        <div class="seg c3" id="seg-period">
+          <button class="seg-btn" data-v="10">10년</button>
+          <button class="seg-btn on" data-v="20">20년</button>
+          <button class="seg-btn" data-v="30">30년</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 추가 비용 -->
+    <div class="card">
+      <div class="card-title">추가 비용 (선택)</div>
+      <div class="chk-group">
+
+        <div>
+          <label class="chk-row">
+            <input type="checkbox" id="chk-interior" onchange="toggleExtra('interior'); calc()">
+            <div class="chk-txt">
+              <span class="chk-main">인테리어 비용</span>
+              <span class="chk-sub">예상 시공 비용 직접 입력</span>
+            </div>
+          </label>
+          <div class="chk-extra" id="extra-interior">
+            <div class="inp-wrap">
+              <input type="number" id="interior-val" placeholder="예: 3000" min="0" oninput="calc()">
+              <span class="inp-sfx">만원</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="chk-row">
+            <input type="checkbox" id="chk-move" onchange="toggleExtra('move'); calc()">
+            <div class="chk-txt">
+              <span class="chk-main">이사비</span>
+              <span class="chk-sub">이사 비용 직접 입력</span>
+            </div>
+          </label>
+          <div class="chk-extra" id="extra-move">
+            <div class="inp-wrap">
+              <input type="number" id="move-val" placeholder="예: 200" min="0" oninput="calc()">
+              <span class="inp-sfx">만원</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="notice">
+      ⚠️ <strong>참고용 계산기입니다.</strong> 취득세는 조정대상지역 여부·일시적 2주택 예외·생애최초 주택구입 감면 등에 따라 실제 금액이 달라질 수 있습니다. 중개보수는 협의 가능하며, 등기비용(법무사 보수)은 사무소에 따라 변동됩니다. 최종 확인은 세무사·법무사에게 받으세요.
+    </div>
+
+  </div>
+
+  <!-- ── RESULT ── -->
+  <div class="result-col">
+    <div class="res-card">
+      <div class="res-head">
+        <div class="res-head-lbl">총 필요 자금 (추정)</div>
+        <div class="res-total-amt" id="res-total">—<span class="u">만원</span></div>
+        <div class="res-sub" id="res-total-sub">입력값을 확인하세요</div>
+      </div>
+
+      <div class="res-body">
+
+        <div class="res-section-title">기본 비용 내역</div>
+
+        <div class="res-row">
+          <span class="res-row-lbl">매물 가격</span>
+          <span class="res-row-val" id="r-price">—</span>
+        </div>
+        <div class="res-row">
+          <span class="res-row-lbl">취득세 <span class="tag" id="r-tax-tag">—</span></span>
+          <span class="res-row-val hl" id="r-tax">—</span>
+        </div>
+        <div class="res-row">
+          <span class="res-row-lbl">지방교육세 <span class="tag">취득세×10%</span></span>
+          <span class="res-row-val" id="r-edu">—</span>
+        </div>
+        <div class="res-row" id="row-agri">
+          <span class="res-row-lbl">농어촌특별세 <span class="tag">85㎡↑</span></span>
+          <span class="res-row-val" id="r-agri">—</span>
+        </div>
+        <div class="res-row">
+          <span class="res-row-lbl">중개보수 (복비)</span>
+          <span class="res-row-val" id="r-agent">—</span>
+        </div>
+        <div class="res-row">
+          <span class="res-row-lbl">등기비용</span>
+          <span class="res-row-val" id="r-reg">—</span>
+        </div>
+
+        <div id="extra-section">
+          <hr class="res-hr">
+          <div class="res-section-title">추가 비용</div>
+          <div class="res-row" id="row-interior" style="display:none">
+            <span class="res-row-lbl">인테리어</span>
+            <span class="res-row-val" id="r-interior">—</span>
+          </div>
+          <div class="res-row" id="row-move" style="display:none">
+            <span class="res-row-lbl">이사비</span>
+            <span class="res-row-val" id="r-move">—</span>
+          </div>
+        </div>
+
+        <hr class="res-hr">
+
+        <div class="equity-box">
+          <div class="equity-lbl">💵 실 필요 현금 (자기자본)</div>
+          <div class="equity-val" id="r-equity">—</div>
+          <div class="equity-sub" id="r-equity-sub">대출 제외 후</div>
+        </div>
+
+        <div class="loan-box" id="loan-box">
+          <div class="loan-row">
+            <span class="l">대출 금액</span>
+            <span class="v" id="r-loan-amt">—</span>
+          </div>
+          <div class="loan-row">
+            <span class="l">월 상환액 (원리금균등)</span>
+            <span class="v" id="r-monthly">—</span>
+          </div>
+          <div class="loan-row">
+            <span class="l">총 이자 합산</span>
+            <span class="v" id="r-interest">—</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── State ── */
+  const S = {
+    houseType: 'apt',
+    ownerType: 'none',
+    loanPeriod: 20,
+  };
+
+  /* ── Seg controls ── */
+  ['seg-type', 'seg-owner', 'seg-period'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+      const btn = e.target.closest('.seg-btn');
+      if (!btn) return;
+      document.querySelectorAll(`#${id} .seg-btn`).forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      if (id === 'seg-type')   S.houseType  = btn.dataset.v;
+      if (id === 'seg-owner')  S.ownerType  = btn.dataset.v;
+      if (id === 'seg-period') S.loanPeriod = +btn.dataset.v;
+      if (id === 'seg-owner') {
+        document.getElementById('owner-note-one').classList.toggle('show', btn.dataset.v === 'one');
+        document.getElementById('owner-note-multi').classList.toggle('show', btn.dataset.v === 'multi');
+      }
+      calc();
+    });
+  });
+
+  function onSlider() {
+    const v = document.getElementById('loan-ratio').value;
+    document.getElementById('loan-ratio-disp').textContent = v + '%';
+    calc();
+  }
+
+  function toggleExtra(type) {
+    const open = document.getElementById('chk-' + type).checked;
+    document.getElementById('extra-' + type).classList.toggle('open', open);
+  }
+
+  /* ── Helpers ── */
+  function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+  function eok(n) {
+    if (n <= 0) return '0만원';
+    if (n >= 10000) {
+      const e = Math.floor(n / 10000), r = Math.round(n % 10000);
+      return r === 0 ? `${e}억원` : `${e}억 ${fmt(r)}만원`;
+    }
+    return fmt(n) + '만원';
+  }
+
+  /* ── 취득세율 ── */
+  function taxRate(price, ownerType) {
+    if (ownerType === 'multi') return 0.12;
+    if (ownerType === 'one')   return 0.08;
+    // 무주택 일반세율
+    if (price <= 60000) return 0.01;
+    if (price <= 90000) return (price * 2 / 30000 - 3) / 100;
+    return 0.03;
+  }
+
+  /* ── 중개보수 ── */
+  function agentFee(price) {
+    if (price <   5000) return Math.min(price * 0.006, 25);
+    if (price <  20000) return Math.min(price * 0.005, 80);
+    if (price <  90000) return price * 0.004;
+    if (price < 120000) return price * 0.005;
+    if (price < 150000) return price * 0.006;
+    return price * 0.007;
+  }
+
+  /* ── 월 상환액 (원리금균등) ── */
+  function monthlyPayment(principalMan, annualPct, years) {
+    if (principalMan <= 0 || annualPct <= 0) return 0;
+    const r = annualPct / 100 / 12;
+    const n = years * 12;
+    return principalMan * 10000 * r * Math.pow(1+r, n) / (Math.pow(1+r, n) - 1) / 10000;
+  }
+
+  /* ── Main calc ── */
+  function calc() {
+    const price   = +document.getElementById('price').value || 0;
+    const area    = +document.getElementById('area').value  || 0;
+    const rate    = +document.getElementById('loan-rate').value || 0;
+    const ratio   = +document.getElementById('loan-ratio').value;
+    const chkI    = document.getElementById('chk-interior').checked;
+    const chkM    = document.getElementById('chk-move').checked;
+    const interior = chkI ? (+document.getElementById('interior-val').value || 0) : 0;
+    const move     = chkM ? (+document.getElementById('move-val').value     || 0) : 0;
+
+    /* 가격 표시 */
+    document.getElementById('price-display').textContent = eok(price);
+
+    /* 세금 계산 */
+    const tr      = taxRate(price, S.ownerType);
+    const taxAmt  = price * tr;
+    const eduAmt  = taxAmt * 0.1;
+    const agriAmt = area > 85 ? taxAmt * 0.2 : 0;
+
+    /* 중개보수 */
+    const agent = agentFee(price);
+
+    /* 등기비용 (등록면허세 0.2% + 지방교육세 20% + 법무사 추정 50만) */
+    const regTax = price * 0.002;
+    const regEdu = regTax * 0.2;
+    const reg    = regTax + regEdu + 50;
+
+    /* 합계 */
+    const totalCost = price + taxAmt + eduAmt + agriAmt + agent + reg + interior + move;
+    const loanAmt   = price * ratio / 100;
+    const equity    = totalCost - loanAmt;
+
+    /* 대출 */
+    const monthly  = monthlyPayment(loanAmt, rate, S.loanPeriod);
+    const totalInt = monthly * S.loanPeriod * 12 - loanAmt;
+
+    /* ── DOM 업데이트 ── */
+    document.getElementById('res-total').innerHTML = `${fmt(totalCost)}<span class="u">만원</span>`;
+    document.getElementById('res-total-sub').textContent = eok(totalCost);
+
+    document.getElementById('r-price').textContent  = fmt(price) + '만원';
+    document.getElementById('r-tax-tag').textContent = (tr * 100).toFixed(2).replace(/\.?0+$/,'') + '%';
+    document.getElementById('r-tax').textContent    = fmt(taxAmt) + '만원';
+    document.getElementById('r-edu').textContent    = fmt(eduAmt) + '만원';
+    document.getElementById('r-agent').textContent  = fmt(agent)  + '만원';
+    document.getElementById('r-reg').textContent    = fmt(reg)    + '만원';
+
+    document.getElementById('row-agri').style.display = area > 85 ? '' : 'none';
+    document.getElementById('r-agri').textContent = fmt(agriAmt) + '만원';
+
+    document.getElementById('extra-section').style.display = (chkI || chkM) ? '' : 'none';
+    document.getElementById('row-interior').style.display = chkI ? '' : 'none';
+    document.getElementById('row-move').style.display     = chkM ? '' : 'none';
+    document.getElementById('r-interior').textContent = fmt(interior) + '만원';
+    document.getElementById('r-move').textContent     = fmt(move)     + '만원';
+
+    document.getElementById('r-equity').textContent    = eok(Math.max(0, equity));
+    document.getElementById('r-equity-sub').textContent = `대출 ${ratio}% (${fmt(loanAmt)}만원) 제외`;
+
+    const showLoan = loanAmt > 0 && rate > 0;
+    document.getElementById('loan-box').style.display = showLoan ? '' : 'none';
+    if (showLoan) {
+      document.getElementById('r-loan-amt').textContent  = eok(loanAmt);
+      document.getElementById('r-monthly').textContent   = fmt(monthly) + '만원 / 월';
+      document.getElementById('r-interest').textContent  = eok(Math.max(0, totalInt));
+    }
+  }
+
+  // 초기 실행
+  calc();
+</script>
+</body>
+</html>
